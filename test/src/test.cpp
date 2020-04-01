@@ -27,46 +27,45 @@
 #include <iostream>
 #include <fstream>
 
-int main () {
-    try
-    {
-        fty::ServiceStatusProvider statusProvider("test-service", "../example/libfty-service-status-example.so");
+#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
+#include <catch2/catch.hpp>
 
-        //set a operating status and read it back
-        {
-            statusProvider.set(fty::OperatingStatus::InService);
+TEST_CASE( "Link to valid plugin (example lib)", "[fty::ServiceStatusProvider] 1" ) {
+    REQUIRE_NOTHROW(fty::ServiceStatusProvider("test-service", "../example/libfty-service-status-example.so"));
+}
 
-            std::ifstream operating("test-service.operating");
-            std::string sOperatingStatus;
-            operating >> sOperatingStatus;
+TEST_CASE( "Link to not existing plugin", "[fty::ServiceStatusProvider] 2" ) {
+    REQUIRE_THROWS(fty::ServiceStatusProvider("test-service", "do-not-exist.so"));
+}
 
-            uint8_t operatingStatus = std::stoi(sOperatingStatus);
+TEST_CASE( "Test the output of example plugin", "[fty::ServiceStatusProvider] 3" ) {
 
-            if( static_cast<fty::OperatingStatus>(operatingStatus) != fty::OperatingStatus::InService ) {
-                return -1;
-            }
-        }
-       
-        //set an operating status and read it back
-        {
-            statusProvider.set(fty::HealthState::Ok);
+    fty::ServiceStatusProvider statusProvider("test-service", "../example/libfty-service-status-example.so");
+    
+    SECTION( "set an operating status and read it back" ) {
 
-            std::ifstream operating("test-service.health");
-            std::string sOperatingStatus;
-            operating >> sOperatingStatus;
+        statusProvider.set(fty::OperatingStatus::InService);
 
-            uint8_t operatingStatus = std::stoi(sOperatingStatus);
+        std::ifstream operating("test-service.operating");
+        std::string sOperatingStatus;
+        operating >> sOperatingStatus;
 
-            if( static_cast<fty::HealthState>(operatingStatus) != fty::HealthState::Ok ) {
-                return -1;
-            }
-        }
-    }
-    catch(std::exception & e)
-    {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        uint8_t operatingStatus = std::stoi(sOperatingStatus);
+
+        REQUIRE( static_cast<fty::OperatingStatus>(operatingStatus) == fty::OperatingStatus::InService );
+
     }
     
-    return 0;
-} 
+    SECTION( "set an operating status and read it back" ) {
+
+        statusProvider.set(fty::HealthState::Ok);
+
+        std::ifstream operating("test-service.health");
+        std::string sOperatingStatus;
+        operating >> sOperatingStatus;
+
+        uint8_t operatingStatus = std::stoi(sOperatingStatus);
+
+        REQUIRE( static_cast<fty::HealthState>(operatingStatus) == fty::HealthState::Ok );
+    }
+}

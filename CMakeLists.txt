@@ -40,10 +40,15 @@ if(BUILD_TESTING)
         add_subdirectory(example)
         add_subdirectory(test)
 
+        set(MEMORYCHECK_OPTIONS = "--error-exitcode=1 --leak-check=full")
         add_custom_target(memcheck
                 COMMAND ${CMAKE_CTEST_COMMAND} 
                         --force-new-ctest-process --test-action memcheck
-                COMMAND cat "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.*.log")
+                COMMAND rm "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.final.log"
+                COMMAND cat "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.*.log" >> "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.final.log"
+                COMMAND cat "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.final.log"
+                COMMAND test -s "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.final.log" && exit 33 || exit 0
+                )
 endif()
 
 #if build documentation
