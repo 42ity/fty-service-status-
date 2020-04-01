@@ -17,7 +17,11 @@ target_include_directories(${PROJECT_NAME} INTERFACE
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
+if(CMAKE_VERSION VERSION_LESS "3.1")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
+else ()
+  target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
+endif()
 
 target_compile_options(${PROJECT_NAME} INTERFACE 
   $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
