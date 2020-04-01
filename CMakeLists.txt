@@ -35,6 +35,11 @@ if(BUILD_TESTING)
         #build example and test
         add_subdirectory(example)
         add_subdirectory(test)
+
+        add_custom_target(memcheck
+                COMMAND ${CMAKE_CTEST_COMMAND} 
+                        --force-new-ctest-process --test-action memcheck
+                COMMAND cat "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.*.log")
 endif()
 
 #if build documentation
