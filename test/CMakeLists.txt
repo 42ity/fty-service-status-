@@ -11,7 +11,7 @@ add_executable(${PROJECT_NAME} src/test.cpp)
 
 target_link_libraries(${PROJECT_NAME}
   fty-service-status
-  Catch2::Catch2
+  #Catch2::Catch2 => when we will have cmake 3.10
 )
 
 if(CMAKE_VERSION VERSION_LESS "3.1")
