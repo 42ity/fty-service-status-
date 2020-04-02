@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.0)
 project(fty-service-status-test)
 
 #add Catch2
-find_package(Catch2 REQUIRED)
+#find_package(Catch2 REQUIRED) => when we will have cmake 3.10
 
 include(Catch)
 
