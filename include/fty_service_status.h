@@ -115,12 +115,16 @@ namespace fty
         /// @param serviceName [in] name of the service for which we do the notification
         /// @param pluginPath [in] path to the plugin
         ServiceStatusProvider(const std::string & serviceName, const std::string & pluginPath)
-         : m_serviceName(serviceName), m_pluginPath(pluginPath) {
+         : m_serviceName(serviceName){
             //try to load the plugin
-            m_spPlugin = std::shared_ptr<void>(dlopen(m_pluginPath.c_str(), RTLD_LAZY), [] (void * ptr) { if(ptr) dlclose(ptr);});
+            m_spPlugin = std::shared_ptr<void>(dlopen(pluginPath.c_str(), RTLD_LAZY), [] (void * ptr) { if(ptr) dlclose(ptr);});
             if (!m_spPlugin) {
                 throw std::runtime_error("Cannot load plugin: " + std::string(dlerror()));
             }
+
+            char * fullPath = realpath(pluginPath.c_str(), NULL);
+            m_pluginPath = std::string(fullPath);
+            free(fullPath);
 
             //try to load the 2 functions
             // reset errors
@@ -139,7 +143,7 @@ namespace fty
         }
     };
 
-    /// This class is all an easy use of collection of ServiceStatusProvider to set all at once
+    /// This class is all an easy use of collection of ServiceStatusProvider to set all status at once
     class ServiceStatusProviderCollection
     {
         private:
@@ -151,6 +155,30 @@ namespace fty
         /// @param serviceName [in] name of the service for which we do the notification
         ServiceStatusProviderCollection(const std::string & serviceName): m_serviceName(serviceName) {};
 
+        /// Get the service name
+        ///@return  service name
+        const std::string & getServiceName() const noexcept { return m_serviceName; }
+        
+        /// Set the Operating Status for all the collection
+        ///@param os [in] Operating Status to set
+        void setForAll(OperatingStatus os) noexcept {
+            for(auto & item : m_serviceStatusProviders)
+            {
+                item.second.set(os);
+            }
+        }
+
+        /// Set the Health State for all the collection
+        ///@param hs [in] Health state to set
+        void setForAll(HealthState hs) noexcept { 
+            for(auto & item : m_serviceStatusProviders)
+            {
+                item.second.set(hs);
+            }
+        }
+
+        /// Add a ServiceStatusProvider to the collection. The ServiceStatusProvider must be for the same service
+        /// @param ssp [in] ServiceStatusProvider
         void add(const ServiceStatusProvider & ssp) { 
             if(m_serviceName != ssp.getServiceName()) {
                 throw std::runtime_error( "Impossible to add a Service Status Provider for "+ssp.getServiceName()+" into a collection for "+m_serviceName);
@@ -159,14 +187,26 @@ namespace fty
            m_serviceStatusProviders.emplace(ssp.getPluginPath(), ssp);
         }
 
+        /// Add a ServiceStatusProvider to the collection using the path to the plugin
+        /// @param pluginPath [in] Path of the plugin
         void add(const std::string & pluginPath) {
-            m_serviceStatusProviders.emplace(pluginPath,ServiceStatusProvider(m_serviceName, pluginPath));
+            ServiceStatusProvider newProvider(m_serviceName, pluginPath);
+            m_serviceStatusProviders.emplace(newProvider.getPluginPath(), newProvider);
         }
 
+        /// Get the ServiceStatusProvider from the collection.
+        /// The ServiceStatusProviders are inside a map with there path as a key
+        ///@return map of <path, ServiceStatusProvider>
         const std::map<std::string, ServiceStatusProvider> & getCollection() const noexcept { return m_serviceStatusProviders; }
 
+        /// Remove a ServiceStatusProvider to the collection using the path to the plugin
+        /// @param pluginPath [in] Path of the plugin to remove
         void remove( const std::string & pluginPath ) noexcept { m_serviceStatusProviders.erase(pluginPath); }
 
+        /// Helper which list the content of a folder and return their full path if they match to the regex
+        /// For example use "*.so" to get all the <file>.so path
+        ///@param folderPath [in] Path to the folder
+        ///@return List of paths
         static std::list<std::string> listPathOfFolderElements(const std::string & folderPath, const std::regex & regex = std::regex(".*")) {
             std::list<std::string> listPathElements;
             DIR *d;
@@ -176,7 +216,10 @@ namespace fty
             if (d) {
                 while ((dir = readdir(d)) != NULL) {
                     if(std::regex_match(dir->d_name, regex)){
-                        listPathElements.push_back(folderPath + std::string(dir->d_name));
+                        std::string path(folderPath +"/"+std::string(dir->d_name));
+                        char * fullPath = realpath(path.c_str(), NULL);
+                        listPathElements.push_back(fullPath);
+                        free(fullPath);
                     }
                 }
                 closedir(d);
