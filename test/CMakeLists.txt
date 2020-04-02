@@ -23,7 +23,7 @@ else ()
 
   target_link_libraries(${PROJECT_NAME}
     fty-service-status
-    #Catch2::Catch2 => when we will have cmake 3.1
+    Catch2::Catch2
   )
 
   catch_discover_tests(${PROJECT_NAME})
