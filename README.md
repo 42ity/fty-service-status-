@@ -1,7 +1,7 @@
 # fty-service-status
 Helpers to provide status of service accross 42ity and more.
 
-This library allow the service to use a plugin architecture to "notify" of their status.
+This library allow the service to use a plugin C++ architecture to "notify" of their status.
 The list of operating status and health states available is discribe bellow.
 
 This is a library header-only.
@@ -17,6 +17,42 @@ make test # to run self-test
 make memcheck # to run self-test with valgrind
 make doc # to create doxygen documentation at the root of the project
 ```
+
+## How to use the plugin and the objects provided by the plugin
+### How to use one plugin
+```cpp
+#include <fty_service_status.h>
+...
+//load the plugin
+fty::ServiceStatusPluginWrapper myPlugin("pathToMyPlugin");
+
+//create a object to provide the status (The object is stored under a shared_ptr with a special deleter)
+fty::ServiceStatusProviderPtr statusProvider = plugin.newServiceStatusProviderPtr("my-service");
+...
+
+statusProvider.set(fty::OperatingStatus::InService);
+statusProvider.set(fty::HealthState::Ok);
+...
+```
+Be carreful, the plugin (ServiceStatusPluginWrapper) must be loaded while ServiceStatusProvider objects are still in use.
+
+### How to use the collection of plugins
+```cpp
+#include <fty_service_status.h>
+...
+//Create the collection
+fty::ServiceStatusPluginWrapperCollection statusProviders("my-service");
+
+//load all the plugin with a name finishing by "status.so"
+int loaded = statusProviders.addAll("pathToMyPluginDirectory", std::regex(".*status.so"));
+std::cout << "You loaded " << loaded << " service status provider plugins" << std::endl;
+...
+
+statusProviders.setForAll(fty::OperatingStatus::InService);
+statusProviders.setForAll(fty::HealthState::Ok);
+...
+```
+
 ## List of available status
 ### Operating status
 | Name  | Value | Comments  |
@@ -49,3 +85,22 @@ make doc # to create doxygen documentation at the root of the project
 | Major Failure | 20 | The element is failing. It is possible that some or all of the functionality of this component is degraded or not working.|
 | Critical Failure | 25 | The element is non-functional and recovery might not be possible.|
 | Non-recoverable Error | 30 | The element has completely failed, and recovery is not possible. All functionality provided by this element has been lost.|
+
+## How to create a plugin
+
+A plugin must implement the following functions:
+
+```cpp
+///Return the plugin name
+const char * getPluginName();
+
+///Return the last error message from the plugin
+const char * getPluginLastError();
+
+///Allocate a ServiceStatusProvider in the pointer give in parameter
+int createServiceStatusProvider(fty::ServiceStatusProvider** spp, const char * serviceName);
+
+///Free the ServiceStatusProvider in parameter
+void deleteServiceStatusProvider(fty::ServiceStatusProvider* spp);
+```
+If you wonder why we have a deleter function. Remember that for every memory allocation done on the plugin, the memory must be free in the plugin to avaoid bad surprise. Same with the types we use: ServiceStatusProvider do not have functions using c++ standard library objects. It's to avoid issue created when compilers of application and lib do not use the same implementation of the c++ standard library. In your plugin implementation, you can use the standare library.

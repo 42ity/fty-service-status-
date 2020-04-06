@@ -34,36 +34,41 @@ const std::string EXAMPLE_FOLDER = "../example/";
 const std::string EXAMPLE_NAME = "libfty-service-status-example.so";
 const std::string EXAMPLE_PATH = EXAMPLE_FOLDER + EXAMPLE_NAME;
 
-TEST_CASE( "Link to valid plugin (example lib)", "[fty::ServiceStatusProvider]-valid" ) {
-    REQUIRE_NOTHROW(fty::ServiceStatusProvider("test-service", EXAMPLE_PATH));
+TEST_CASE( "Link to valid plugin (example lib)", "[fty::ServiceStatusPluginWrapper]-valid" ) {
+    REQUIRE_NOTHROW(fty::ServiceStatusPluginWrapper(EXAMPLE_PATH));
 }
 
-TEST_CASE( "Link to not existing plugin", "[fty::ServiceStatusProvider]-notValid" ) {
-    REQUIRE_THROWS(fty::ServiceStatusProvider("test-service", "do-not-exist.so"));
+TEST_CASE( "Link to not existing plugin", "[fty::ServiceStatusPluginWrapper]-notValid" ) {
+    REQUIRE_THROWS(fty::ServiceStatusPluginWrapper("do-not-exist.so"));
 }
 
-TEST_CASE( "Test content plugin", "[fty::ServiceStatusProvider]-functions" ) {
-    fty::ServiceStatusProvider p1("test-service", EXAMPLE_PATH);
+TEST_CASE( "getPluginName to valid plugin (example lib)", "[fty::ServiceStatusPluginWrapper]-getPluginName" ) {
+    fty::ServiceStatusPluginWrapper plugin(EXAMPLE_PATH);
 
-    REQUIRE(p1.isSetHealthStateAvailable());
-    REQUIRE(p1.isSetOperatingStatusAvailable());
-    REQUIRE(p1.getServiceName() == "test-service");
+    REQUIRE(plugin.getPluginName() == "Example plugin");
 }
 
-TEST_CASE( "Copy of an existing plugin (memleak at copy)", "[fty::ServiceStatusProvider]-copy" ) {
-    fty::ServiceStatusProvider p1("test-service", EXAMPLE_PATH);
-    fty::ServiceStatusProvider p2 = p1;
+TEST_CASE( "Copy of an existing plugin (memleak at copy)", "[fty::ServiceStatusPluginWrapper]-copy" ) {
+    fty::ServiceStatusPluginWrapper p1(EXAMPLE_PATH);
+    fty::ServiceStatusPluginWrapper p2 = p1;
 
-    REQUIRE(p1.getPluginPath() == p2.getPluginPath());
+    REQUIRE(p1.getPluginName() == p2.getPluginName());
+}
+
+TEST_CASE( "Create ServiceStatusProvider from example", "[fty::ServiceStatusProvider]-valid" ) {
+    fty::ServiceStatusPluginWrapper plugin(EXAMPLE_PATH);
+    fty::ServiceStatusProviderPtr spp = plugin.newServiceStatusProviderPtr("test-service");
+
+    REQUIRE(std::string(spp->getServiceName()) == "test-service");
 }
 
 TEST_CASE( "Test the output of example plugin", "[fty::ServiceStatusProvider]-set" ) {
-
-    fty::ServiceStatusProvider statusProvider("test-service", EXAMPLE_PATH);
+    fty::ServiceStatusPluginWrapper plugin(EXAMPLE_PATH);
+    fty::ServiceStatusProviderPtr statusProvider = plugin.newServiceStatusProviderPtr("test-service");
     
     SECTION( "set an operating status and read it back" ) {
 
-        statusProvider.set(fty::OperatingStatus::InService);
+        statusProvider->set(fty::OperatingStatus::InService);
 
         std::ifstream operating("test-service.operating");
         std::string sOperatingStatus;
@@ -77,7 +82,7 @@ TEST_CASE( "Test the output of example plugin", "[fty::ServiceStatusProvider]-se
     
     SECTION( "set an operating status and read it back" ) {
 
-        statusProvider.set(fty::HealthState::Ok);
+        statusProvider->set(fty::HealthState::Ok);
 
         std::ifstream operating("test-service.health");
         std::string sOperatingStatus;
@@ -89,78 +94,66 @@ TEST_CASE( "Test the output of example plugin", "[fty::ServiceStatusProvider]-se
     }
 }
 
-TEST_CASE( "Test collection add from path", "[fty::ServiceStatusProviderCollection]-addFromPath" ) {
-    fty::ServiceStatusProviderCollection collection("test-service");
+
+TEST_CASE( "Test collection add from path", "[fty::ServiceStatusPluginWrapperCollection]-addFromPath" ) {
+    fty::ServiceStatusPluginWrapperCollection collection("test-service");
 
     REQUIRE(collection.getServiceName() == "test-service");
-    REQUIRE(collection.getCollection().size() == 0);
+    REQUIRE(collection.getPluginCollection().size() == 0);
 
     REQUIRE_NOTHROW(collection.add(EXAMPLE_PATH));
-    REQUIRE(collection.getCollection().size() == 1);
+    REQUIRE(collection.getPluginCollection().size() == 1);
 }
 
-TEST_CASE( "Test collection add wrong from path", "[fty::ServiceStatusProviderCollection]-addWromgFromPath" ) {
-    fty::ServiceStatusProviderCollection collection("test-service");
+TEST_CASE( "Test collection add wrong from path", "[fty::ServiceStatusPluginWrapperCollection]-addWrongFromPath" ) {
+    fty::ServiceStatusPluginWrapperCollection collection("test-service");
 
     REQUIRE(collection.getServiceName() == "test-service");
-    REQUIRE(collection.getCollection().size() == 0);
+    REQUIRE(collection.getPluginCollection().size() == 0);
 
     REQUIRE_THROWS(collection.add("nothing.so"));
-    REQUIRE(collection.getCollection().size() == 0);
+    REQUIRE(collection.getPluginCollection().size() == 0);
 }
 
-TEST_CASE( "Test collection add from copy", "[fty::ServiceStatusProviderCollection]-addFromCopy" ) {
-    fty::ServiceStatusProviderCollection collection("test-service");
+TEST_CASE( "Test collection addAll from path", "[fty::ServiceStatusPluginWrapperCollection]-addAll" ) {
+    fty::ServiceStatusPluginWrapperCollection collection("test-service");
 
     REQUIRE(collection.getServiceName() == "test-service");
-    REQUIRE(collection.getCollection().size() == 0);
+    REQUIRE(collection.getPluginCollection().size() == 0);
 
-    fty::ServiceStatusProvider statusProvider1("test-service", EXAMPLE_PATH);
-    REQUIRE_NOTHROW(collection.add(statusProvider1));
-    REQUIRE(collection.getCollection().size() == 1);
+    REQUIRE(collection.addAll(EXAMPLE_FOLDER, std::regex(".*example.so")) == 1);
+    REQUIRE(collection.getPluginCollection().size() == 1);
 }
 
-TEST_CASE( "Test collection add wrong from copy", "[fty::ServiceStatusProviderCollection]-addWrongFromCopy" ) {
-    fty::ServiceStatusProviderCollection collection("test-service");
+TEST_CASE( "Test collection remove", "[fty::ServiceStatusPluginWrapperCollection]-remove" ) {
+    fty::ServiceStatusPluginWrapperCollection collection("test-service");
 
     REQUIRE(collection.getServiceName() == "test-service");
-    REQUIRE(collection.getCollection().size() == 0);
+    REQUIRE(collection.getPluginCollection().size() == 0);
 
-    fty::ServiceStatusProvider statusProvider2("test-service2", EXAMPLE_PATH);
-    REQUIRE_THROWS(collection.add(statusProvider2));
-    REQUIRE(collection.getCollection().size() == 0);
-}
+    REQUIRE_NOTHROW(collection.add(EXAMPLE_PATH));
+    REQUIRE(collection.getPluginCollection().size() == 1);
 
-TEST_CASE( "Test collection remove", "[fty::ServiceStatusProviderCollection]-remove" ) {
-    fty::ServiceStatusProviderCollection collection("test-service");
-
-    REQUIRE(collection.getServiceName() == "test-service");
-    REQUIRE(collection.getCollection().size() == 0);
-
-    fty::ServiceStatusProvider statusProvider1("test-service", EXAMPLE_PATH);
-    REQUIRE_NOTHROW(collection.add(statusProvider1));
-    REQUIRE(collection.getCollection().size() == 1);
-
-    REQUIRE_NOTHROW(collection.remove(statusProvider1.getPluginPath()));
-    REQUIRE(collection.getCollection().size() == 0);
+    REQUIRE_NOTHROW(collection.remove("Example plugin"));
+    REQUIRE(collection.getPluginCollection().size() == 0);
 }
 
 TEST_CASE( "Test collection set with empty collection", "[fty::ServiceStatusProviderCollection]-emptySet" ) {
-    fty::ServiceStatusProviderCollection collection("test-service");
+    fty::ServiceStatusPluginWrapperCollection collection("test-service");
 
     REQUIRE(collection.getServiceName() == "test-service");
-    REQUIRE(collection.getCollection().size() == 0);
+    REQUIRE(collection.getPluginCollection().size() == 0);
 
     REQUIRE_NOTHROW(collection.setForAll(fty::OperatingStatus::Aborted));
     REQUIRE_NOTHROW(collection.setForAll(fty::HealthState::MinorFailure));
 }
 
 TEST_CASE( "Test collection set with example", "[fty::ServiceStatusProviderCollection]-exampleSet" ) {
-    fty::ServiceStatusProviderCollection collection("test-service");
+    fty::ServiceStatusPluginWrapperCollection collection("test-service");
 
     REQUIRE_NOTHROW(collection.add(EXAMPLE_PATH));
 
-        SECTION( "set an operating status and read it back" ) {
+    SECTION( "set an operating status and read it back" ) {
 
         collection.setForAll(fty::OperatingStatus::Emigrating);
 
@@ -190,7 +183,7 @@ TEST_CASE( "Test collection set with example", "[fty::ServiceStatusProviderColle
 }
 
 TEST_CASE( "Test listPathOfFolderElements", "[fty::ServiceStatusProviderCollection]-listPathOfFolderElements" ) {
-    std::list<std::string> list = fty::ServiceStatusProviderCollection::listPathOfFolderElements(EXAMPLE_FOLDER, std::regex(".*\\.so"));
+    std::list<std::string> list = fty::ServiceStatusPluginWrapperCollection::listPathOfFolderElements(EXAMPLE_FOLDER, std::regex(".*\\.so"));
 
     REQUIRE(list.size() == 1);
 }

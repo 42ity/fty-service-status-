@@ -18,10 +18,43 @@
 */
 #pragma once
 
-#include <cstdint>
+#include <fty_service_status.h>
 
+//public interfaces
 extern "C"
 {
-    int setHealthState(const char * serviceName, uint8_t healthState);
-    int setOperatingStatus(const char * serviceName, uint8_t operatingStatus);
-} 
+    const char * getPluginName();
+    const char * getPluginLastError();
+    int createServiceStatusProvider(fty::ServiceStatusProvider** spp, const char * serviceName);
+    void deleteServiceStatusProvider(fty::ServiceStatusProvider* spp);
+}
+
+namespace example
+{
+    //implementation of the example ServiceStatus
+    class ServiceStatusExample : public fty::ServiceStatusProvider
+    {
+        private:
+        std::string m_serviceName;
+
+        public:
+        ServiceStatusExample( const char * serviceName);
+
+        /// Get the service name
+        ///@return  service name
+        const char * getServiceName() const noexcept override;
+
+        /// Set the Operating Status
+        ///@param os [in] Operating Status to set
+        ///@return 0 in success, -1  in case of error and message is stored in getPluginLastError
+        int set(fty::OperatingStatus os) noexcept override;
+
+        /// Set the Health State
+        ///@param hs [in] Health state to set
+        ///@return 0 in success, -1  in case of error and message is stored in getPluginLastError
+        int set(fty::HealthState hs) noexcept override;
+        
+    };
+
+} //namespace example
+
