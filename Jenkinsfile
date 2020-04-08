@@ -1,9 +1,9 @@
 pipeline {
-	agent { label "devel-image && x86_64" }
+    agent { label "devel-image && x86_64" }
 
-	parameters {
+    parameters {
         booleanParam name: 'RUN_MEMCHECKS', defaultValue: true, description: 'Run memchecks?'
-        
+
         // Extra for Eaton CI
         // Use DEFAULT_DEPLOY_BRANCH_PATTERN and DEFAULT_DEPLOY_JOB_NAME if
         // defined in this jenkins setup -- in Jenkins Management Web-GUI
@@ -21,7 +21,7 @@ pipeline {
             defaultValue: true,
             description: 'If the deployment is done, should THIS job wait for it to complete and include its success or failure as the build result (true), or should it schedule the job and exit quickly to free up the executor (false)',
             name: 'DEPLOY_REPORT_RESULT')
-        
+
         booleanParam (
             defaultValue: true,
             description: 'When using temporary subdirs in build/test workspaces, wipe them after the whole job is done successfully?',
@@ -30,38 +30,38 @@ pipeline {
             defaultValue: false,
             description: 'When using temporary subdirs in build/test workspaces, wipe them after the whole job is done unsuccessfully (failed)? Note this would not allow postmortems on CI server, but would conserve its disk space.',
             name: 'DO_CLEANUP_AFTER_FAILED_JOB')
-	}
+    }
 
-	stages {
-		stage('Build') {
-		    steps {
-			    cmakeBuild buildType: 'Release',
-			    cleanBuild: true,
-			    installation: 'InSearchPath',
-			    steps: [[withCmake: true]]
-		    }
-		}
+    stages {
+        stage('Build') {
+            steps {
+                cmakeBuild buildType: 'Release',
+                cleanBuild: true,
+                installation: 'InSearchPath',
+                steps: [[withCmake: true]]
+            }
+        }
 
-		stage('Tests') {
-		    steps {
-			    cmakeBuild buildType: 'Release',
-			    cleanBuild: true,
-			    installation: 'InSearchPath',
-			    steps: [[args: 'test']]
-		    }
-		}
+        stage('Tests') {
+            steps {
+                cmakeBuild buildType: 'Release',
+                cleanBuild: true,
+                installation: 'InSearchPath',
+                steps: [[args: 'test']]
+            }
+        }
 
-		stage('Memchecks') {
-		    when {
-			    environment name: 'RUN_MEMCHECKS', value: 'true'
-		    }
-		    steps {
-			    cmakeBuild buildType: 'Release',
-			    cleanBuild: true,
-			    installation: 'InSearchPath',
-			    steps: [[args: 'test memcheck']]
-		    }
-		}
+        stage('Memchecks') {
+            when {
+                environment name: 'RUN_MEMCHECKS', value: 'true'
+            }
+            steps {
+                cmakeBuild buildType: 'Release',
+                cleanBuild: true,
+                installation: 'InSearchPath',
+                steps: [[args: 'test memcheck']]
+            }
+        }
 
         // stage ('deploy if appropriate') {
         //     steps {
@@ -98,7 +98,7 @@ pipeline {
         //         }
         //     }
         // }
-	}
+    }
     post {
         success {
             script {
