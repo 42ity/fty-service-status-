@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(fty-service-status
-        VERSION 1.0.0
-        DESCRIPTION "Fty service status header")
+        VERSION 1.0.0 )
+
+set(PROJECT_DESCRIPTION "Fty service status header")
 
 include(GNUInstallDirs)
 include(CTest)
