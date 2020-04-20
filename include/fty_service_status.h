@@ -34,7 +34,7 @@ namespace fty
 {
     enum class OperatingStatus : std::uint8_t
     { 
-        Unkown        = 0, 
+        Unknown        = 0, 
         None          = 1, 
         Servicing     = 2,
         Starting      = 3,
@@ -55,7 +55,7 @@ namespace fty
 
     enum class HealthState : std::uint8_t
     { 
-        Unkown                  = 0, 
+        Unknown                  = 0, 
         Ok                      = 5, 
         Warning                 = 10,
         MinorFailure            = 15,
