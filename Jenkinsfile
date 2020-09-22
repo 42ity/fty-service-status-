@@ -48,7 +48,7 @@ pipeline {
                     }
                 }
 
-                stage('Debug Build') {
+                /*stage('Debug Build') {
                     stages {
                         
                         stage('Build with tests') {
@@ -83,7 +83,7 @@ pipeline {
                             }
                         }
                     }
-                }
+                }*/
 
                 stage('Analyse with Coverity') {
                     when {
