@@ -103,7 +103,7 @@ pipeline {
                                     rm -rf build_coverity
                                     mkdir -p build_coverity
                                     cmake -DCMAKE_BUILD_TYPE=Release \
-                                        -DBUILD_TESTING=OFF \
+                                        -DBUILD_TESTING=ON \
                                         -DBUILD_DOC=OFF \
                                         -B $PWD/build_coverity
                                     coverity.sh --build $PWD/build_coverity
