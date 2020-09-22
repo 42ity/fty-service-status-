@@ -39,6 +39,7 @@ pipeline {
                                   mkdir -p build-release
                                   cmake -DCMAKE_BUILD_TYPE=Release \
                                       -DBUILD_TESTING=OFF \
+                                      -DBUILD_DOC=OFF \
                                       -B build-release
                                   cmake --build build-release --parallel $(($(nproc) + 1))
                                   '''
@@ -57,6 +58,7 @@ pipeline {
                                   mkdir -p build-debug
                                   cmake -DCMAKE_BUILD_TYPE=Debug \
                                       -DBUILD_TESTING=ON \
+                                      -DBUILD_DOC=OFF \
                                       -B build-debug
                                   cmake --build build-debug --parallel $(($(nproc) + 1))
                                   '''
@@ -96,9 +98,13 @@ pipeline {
                         stage('Compile') {
                             steps {
                                 sh '''
+                                    export CCACHE_DISABLE=1
+
                                     rm -rf build_coverity
                                     mkdir -p build_coverity
                                     cmake -DCMAKE_BUILD_TYPE=Release \
+                                        -DBUILD_TESTING=OFF \
+                                        -DBUILD_DOC=OFF \
                                         -B $PWD/build_coverity
                                     coverity.sh --build $PWD/build_coverity
                                     '''
