@@ -1,5 +1,5 @@
 Source: fty-service-status
-Maintainer: Clement Perrette <clementperrette@eaton.com>
+Maintainer: fty-service-status Developers <opensource@eaton.com>
 Build-Depends: cmake (>=3.0), debhelper (>= 9), catch2
 Standards-Version: 1.0.0
 Section: devel
