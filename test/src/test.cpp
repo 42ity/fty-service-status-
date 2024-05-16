@@ -65,7 +65,7 @@ TEST_CASE( "Create ServiceStatusProvider from example", "[fty::ServiceStatusProv
 TEST_CASE( "Test the output of example plugin", "[fty::ServiceStatusProvider]-set" ) {
     fty::ServiceStatusPluginWrapper plugin(EXAMPLE_PATH);
     fty::ServiceStatusProviderPtr statusProvider = plugin.newServiceStatusProviderPtr("test-service");
-    
+
     SECTION( "set an operating status and read it back" ) {
 
         statusProvider->set(fty::OperatingStatus::InService);
@@ -79,7 +79,7 @@ TEST_CASE( "Test the output of example plugin", "[fty::ServiceStatusProvider]-se
         REQUIRE( static_cast<fty::OperatingStatus>(operatingStatus) == fty::OperatingStatus::InService );
 
     }
-    
+
     SECTION( "set an operating status and read it back" ) {
 
         statusProvider->set(fty::HealthState::Ok);
@@ -93,7 +93,6 @@ TEST_CASE( "Test the output of example plugin", "[fty::ServiceStatusProvider]-se
         REQUIRE( static_cast<fty::HealthState>(operatingStatus) == fty::HealthState::Ok );
     }
 }
-
 
 TEST_CASE( "Test collection add from path", "[fty::ServiceStatusPluginWrapperCollection]-addFromPath" ) {
     fty::ServiceStatusPluginWrapperCollection collection("test-service");
@@ -166,7 +165,7 @@ TEST_CASE( "Test collection set with example", "[fty::ServiceStatusProviderColle
         REQUIRE( static_cast<fty::OperatingStatus>(operatingStatus) == fty::OperatingStatus::Emigrating );
 
     }
-    
+
     SECTION( "set an operating status and read it back" ) {
 
         collection.setForAll(fty::HealthState::NonRecoverableFailure);

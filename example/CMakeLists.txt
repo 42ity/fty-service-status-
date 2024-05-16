@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.0)
-
 project(fty-service-status-example)
 
 add_library(${PROJECT_NAME} SHARED src/example.cpp)

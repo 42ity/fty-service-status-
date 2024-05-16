@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.13)
+cmake_policy(VERSION 3.13)
 
 project(fty-service-status
         VERSION 1.0.0 )
@@ -28,7 +29,7 @@ else ()
     target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
 endif()
 
-target_compile_options(${PROJECT_NAME} INTERFACE 
+target_compile_options(${PROJECT_NAME} INTERFACE
     $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic -Werror>
 )
@@ -43,10 +44,10 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ DESTINATION include)
 if(BUILD_TESTING)
     #build example and test
     add_subdirectory(example)
-    add_subdirectory(test)  
+    add_subdirectory(test)
     set(MEMORYCHECK_OPTIONS = "--error-exitcode=1 --leak-check=full")
     add_custom_target(memcheck
-        COMMAND ${CMAKE_CTEST_COMMAND} 
+        COMMAND ${CMAKE_CTEST_COMMAND}
                 --force-new-ctest-process --test-action memcheck
         COMMAND true > "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryCheckerFinal.log"
         COMMAND cat "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.*.log" >> "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryCheckerFinal.log"
@@ -91,7 +92,7 @@ if(CREATE_CMAKE_PKG)
         COMPATIBILITY SameMajorVersion
     )
 
-    install(FILES 
+    install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
         DESTINATION lib/cmake/${PROJECT_NAME}
